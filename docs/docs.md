@@ -1,8 +1,4 @@
-# FPGA Research Documentation
-
-All documentation for this project was written by ***Daniel Perez***, who was conducting supervised research with ***Dr. Michael Robson*** at *Villanova University*. 
-
-***Daniel Perez*** is an Undergraduate Computer Science Major in the Class of 2024 at *Villanova University*. 
+# Start Here
 
 ## Table of Contents
 
