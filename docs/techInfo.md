@@ -18,14 +18,31 @@ After getting my account setup through my supervisor's parent account, I spun up
 
 The workflow for developing FPGA's involves:
  
-1. Starting an AWS instance with the AWS FPGA Dev. Image fromt the AWS Marketplace (this does not need to be the special "F1 FPGA" instance, I selected a cheaper, general purpose VM to save costs slightly). 
+1. Starting an AWS instance with the AWS FPGA Dev. Image from the AWS Marketplace (this does not need to be the special "F1 FPGA" instance, I selected a cheaper, general purpose VM to save cost). 
 2. Binding the correct SSH keys from the host (local) machine to the remote AWS instance.  
 3.  Configuring the AWS CLI API through both the AWS EC2 dashboard and entering information the instance's terminal using "aws-cli ...", as well as setting up an S3 bucket. 
-4. Cloning the AWS-FPGA git to the AWS instance's home directory *Optional: run screen*. 
-5. Navigating to the main directory inside the cloned AWS-FPGA git and sourcing the Vitis_setup,sh script. 
-6. Validating (HW-emulation is preferred for some reason) and Compiling a OpenCL/C++ application into the FPGA executables and binary files.  
-7. Upon successful validation and compilation, sourcing the AFI-generation script in the Vitis/Tools directory. 
-8. Transferring the compiled executable (my executable was found in the corresponding example folder) and .awsxclbin file from the tools directory. *Note: AFI Generation executes in the background on a different machine within the AWS network and continues even if the instance used to generate the AFI request is offline, the AWS-CLI must be invoked to ascertain the status of the AFI generation.* 
+4. Cloning the AWS-FPGA git to the AWS instance's home directory *Optional: run `screen`*. 
+5. Navigating to the main directory inside the cloned AWS-FPGA git and enter the following commands:
+ 
+```
+    source vitis_setup.sh
+```
+ 6. Allow the vitis setup script to run to completion. Run `screen`if you have not already. Ensure that only one TARGET is entered. Both `sw_emu` and `hw_emu` will run emulations of the binaries for debugging purposes, while the `hw` TARGET will build the Host application and FPGA binaries. 
+To build or emulate the FPGA binaries run the following commands:
+
+``` 
+    cd $VITIS_DIR/directory/containing/fpga/source_files
+    make clean
+    make TARGET=[sw_emu, hw_emu, or hw] DEVICE=$AWS_PLATFORM all 
+```
+7. Upon successful emulation and/or compilation, the Host application (usually has no extension) and the FPGA binary files (.xclbin file) will be generated, keep track of these two files. 
+8. The final step is to generate the Amazon FPGA Image, do so by running the following commands: 
+ 
+```
+    cd $VITIS_DIR/tools
+    ./create_vitis_afi.sh -xclbin=/path/to/.xclbinfile -o=vadd -s3_bucket=unique_s3_bucket_name -s3_dcp_key=dcpFolderName -s3_logs_key=s3LogsFolderName
+```
+9. Transferring the compiled executable (my executable was found in the corresponding example folder) and .awsxclbin file from the tools directory. *Note: AFI Generation executes in the background on a different machine within the AWS network and continues even if the instance used to generate the AFI request is offline, the AWS-CLI must be invoked to ascertain the status of the AFI generation.* 
 
 ## Useful Links and Sources
 - AWS-FPGA Github Repo: [https://github.com/aws/aws-fpga](https://github.com/aws/aws-fpga) (Documentation for AWS FPGA F1 instances)
