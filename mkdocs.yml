@@ -3,7 +3,7 @@ site_url: https://fpga-workflow-research.readthedocs.io
 
 nav: 
     - Home: index.md
-    - Technical Information: techInfo.md 
+    - Getting Started: techInfo.md 
 
 theme: readthedocs
 repo_url: https://github.com/Galactius/fpga-workflow-research
