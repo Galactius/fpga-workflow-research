@@ -13,7 +13,7 @@ An FPGA or *Field-Programmable Gate Array*, is essentially a processor with inte
 
 While hobbyist or more budget-friendly physical FPGA and virtual FPGA solutions exist, developing an ASIC can be costly for non-business ventures and was thus not considered for this project. In my research, I made use of *Amazon Web Services'* (AWS) FPGA development platform and workflow, which uses AMD's Xilinx platform to develop virtual FPGA's and deploy them to a cloud-based FPGA through AWS's F1 instances. For more information about using AWS for FPGA development, refer to the [AWS-FPGA github repo](https://github.com/aws/aws-fpga). 
 
-As previously mentioned, we will be using AMD's Xilinx platform to develop and deploy FPGA code, however the actual Xilinx tool that we will be using is called "Vitis". While the AWS-FPGA github does describe other tools like "Vivado" or "SDAccel", each of these tools has a different workflow, as described in the [Development Environments](https://github.com/aws/aws-fpga#development-environments) section of the AWS-FPGA github. The main reason that we are using Vitis for this project is because Vivado and certain features of SDAccel (most importantly, OpenCL compatibility for acceleration) is built-into Vitis. Vitis also seems to be the most up to date set of tools provided by Xilinx for Software Developers interested in accelerating code on FPGA's. Vivado is similar to Vitis, but was created for developers using hardware-level langauges (Verilog, VDHL). For more information regarding Vitis, Vivado, or other Xilinx tools, refer to the official [Xilinx Documentation](https://docs.xilinx.com/home) site. The Xilinx documentation goes into much further detail about how [Vitis](https://docs.xilinx.com/r/en-US/ug1393-vitis-application-acceleration/Getting-Started-with-Vitis) works (which the AWS-FPGA github does not discuss). 
+As previously mentioned, we will be using AMD's Xilinx platform to develop and deploy FPGA code, however the actual Xilinx tool that we will be using is called "Vitis". While the AWS-FPGA github does describe other tools like "Vivado" or "SDAccel", each of these tools has a different workflow, as described in the [Development Environments](https://github.com/aws/aws-fpga#development-environments) section of the AWS-FPGA github. The main reason that we are using Vitis for this project is because Vivado and certain features of SDAccel (most importantly, OpenCL compatibility for acceleration) are built-into Vitis. Vitis also seems to be the most up to date set of tools provided by Xilinx for Software Developers interested in accelerating code on FPGA's. Vivado is similar to Vitis, but was created for developers using hardware-level langauges (Verilog, VDHL). For more information regarding Vitis, Vivado, or other Xilinx tools, refer to the official [Xilinx Documentation](https://docs.xilinx.com/home) site. The Xilinx documentation goes into much further detail about how [Vitis](https://docs.xilinx.com/r/en-US/ug1393-vitis-application-acceleration/Getting-Started-with-Vitis) works (which the AWS-FPGA github does not discuss). 
 
 ## Setting up AWS
 
@@ -21,12 +21,12 @@ While it is possible to complete all steps of this project with a secondary or s
 
 The essential steps for setting up AWS for this project are:
  
-1. Adding a Keypair to AWS to access instances
-2. Creating an AWS S3 Bucket
-3. Creating 2 AWS instances (a t-series and an f1-series instance).  
-4. Configuring the "FPGA Developer AMI" and login keypair on both instances
-5. Logging into and Configuring the AWS CLI on the t-series instance.
-6. Verifying that the F1 instance is also accsssible. 
+1. **Adding a Keypair to AWS to access instances**
+2. **Creating an AWS S3 Bucket**
+3. **Creating 2 AWS instances (a t-series and an f1-series instance).**  
+4. **Configuring the "FPGA Developer AMI" and login keypair on both instances**
+5. **Logging into and Configuring the AWS CLI on the t-series instance.**
+6. **Verifying that the F1 instance is also accsssible.** 
 
 There are 2 main AWS instances required to get started. One instance can be any t-series or other general computing Virtual Machineinstance, while the second instance must be an f1-series instance, this "f1" instance is the FPGA based Virtual Machine (VM). 
 
@@ -86,17 +86,22 @@ The following are general instructions for compiling FPGA code into the requisit
         ./create_vitis_afi.sh -xclbin=/path/to/.xclbinfile -o=NameForOutputFolder -s3_bucket=unique_s3_bucket_name -s3_dcp_key=s3dcpFolderName -s3_logs_key=s3LogsFolderName
 
 6. Transfer the compiled executable (my executable was found in the corresponding example folder) and .awsxclbin file from the tools directory to the local machine, using scp or an [external client](https://docs.aws.amazon.com/transfer/latest/userguide/transfer-file.html).
-7. Start the f1 instance, ssh into it, and clone the github with the same command in step 1, then run the following commands:
+7. Start and access the F1 instance, then clone the github with the same command in step 1 (also seen below), then run the Vitis runtime setup script: 
 
         cd $AWS_FPGA_REPO_DIR [directory containing aws-fpga git repo]
         source vitis_runtime_setup.sh
+
+8. To execute an f1 program, simply `./` the file_name of the executable and the ".awsxclbin" file. I reccomend creating a new folder on the home directory or another place to contain each program run. 
+
         ./[executable_name] ./[FPGA_Binary_File].awsxclbin
 
-## Useful Links and Sources
-- AWS-FPGA Github Repo: [https://github.com/aws/aws-fpga](https://github.com/aws/aws-fpga) (Documentation for AWS FPGA F1 instances)
-- AMD Xilinx Documentation: [https://docs.xilinx.com/home](https://docs.xilinx.com/home) (Xilinx-specific documentation, includes links for Vitis & Vivado)
-- AMD Xilinx Wiki: [https://xilinx-wiki.atlassian.net/wiki/spaces/A/overview](https://xilinx-wiki.atlassian.net/wiki/spaces/A/overview]) (General Xilinx FPGA information)
-- AMD Xilinx University Program Vitis Tutorial: [https://xilinx.github.io/xup_compute_acceleration/index.html](https://xilinx.github.io/xup_compute_acceleration/index.html) (Tutorials on using Xilinx's Vitis tools and other general information)
-- HPC Challenge FPGA Applications Github: [https://github.com/pc2/HPCC_FPGA](https://github.com/pc2/HPCC_FPGA) (FPGA Benchmark suite using HPC challenge programs) 
+*Note: You may receive a `Permission Denied` error after running an executable on the f1 instance, simply run `chmod +x ./[executable_name]`*
 
+## Useful Links and Sources
+- AWS-FPGA Github Repo: [https://github.com/aws/aws-fpga](https://github.com/aws/aws-fpga) (Documentation for FPGA Development on AWS)
+- AMD Xilinx Documentation: [https://docs.xilinx.com/home](https://docs.xilinx.com/home) (Xilinx-specific documentation, includes links for Vitis & Vivado)
+- AMD Xilinx Wiki: [https://xilinx-wiki.atlassian.net/wiki/spaces/A/overview](https://xilinx-wiki.atlassian.net/wiki/spaces/A/overview]) (General Xilinx FPGA and other embedded platform information)
+- AMD Xilinx University Program Vitis Tutorial: [https://xilinx.github.io/xup_compute_acceleration/index.html](https://xilinx.github.io/xup_compute_acceleration/index.html) (Tutorials on using Xilinx's Vitis tools and other general information)
+- AMD Xilinx Vitis Examples Page [https://xilinx.github.io/Vitis_Accel_Examples/2022.1/html/index.html#0](https://xilinx.github.io/Vitis_Accel_Examples/2022.1/html/index.html#) (List of Xilinx examples in the AWS-FPGA Repo and explanations for each example)
+- HPC Challenge FPGA Applications Github: [https://github.com/pc2/HPCC_FPGA](https://github.com/pc2/HPCC_FPGA) (FPGA Benchmark suite using HPC challenge programs)
 
