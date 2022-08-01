@@ -1,0 +1,113 @@
+{
+  "main": {
+    "id": "bfe5285a930959cc",
+    "type": "split",
+    "children": [
+      {
+        "id": "9fac521613b26cd6",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "docs/modApps.md",
+            "mode": "source",
+            "source": true
+          }
+        },
+        "group": "c86c060fa1afc2e9"
+      },
+      {
+        "id": "ea7f545f852c7da8",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "docs/modApps.md",
+            "mode": "preview",
+            "source": true
+          }
+        },
+        "group": "c86c060fa1afc2e9"
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "94aadf193b066303",
+    "type": "split",
+    "children": [
+      {
+        "id": "80b440de8b9bf656",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "59e1584046b6cf76",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "2d7f57111dfb32c1",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "f914cf58a56a94a0",
+    "type": "split",
+    "children": [
+      {
+        "id": "46a53d5788c4e001",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3ab4cf6bedc8cbfa",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "docs/modApps.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "9fac521613b26cd6",
+  "lastOpenFiles": [
+    "docs/testLog.md",
+    "docs/techInfo.md",
+    "docs/customApps.md",
+    "docs/index.md",
+    "techInfo.md",
+    "README.md"
+  ]
+}

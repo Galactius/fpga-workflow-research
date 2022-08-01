@@ -85,13 +85,18 @@ The following are general instructions for compiling FPGA code into the requisit
         cd $VITIS_DIR/tools
         ./create_vitis_afi.sh -xclbin=/path/to/.xclbinfile -o=NameForOutputFolder -s3_bucket=unique_s3_bucket_name -s3_dcp_key=s3dcpFolderName -s3_logs_key=s3LogsFolderName
 
-6. Transfer the compiled executable (my executable was found in the corresponding example folder) and .awsxclbin file from the tools directory to the local machine, using scp or an [external client](https://docs.aws.amazon.com/transfer/latest/userguide/transfer-file.html).
-7. Start and access the F1 instance, then clone the github with the same command in step 1 (also seen below), then run the Vitis runtime setup script: 
+6. Before moving the FPGA binaries to the F1 instance, you must first verify that the generation is actually complete, as the .awsxclbin file will be available on in the tools folder as soon as you run the generation commmand. To verify the status of the Amazon FPGA Image, you must first find the AFI ID of the specific .xclbin binary you are trying to convert. The AFI can be found by reading one of the text files ending in `_afi_id.txt` which can be found in the `$AWS_FPGA_REPO_DIR/Vitis/tools` directory. The line "FpgaImageId" line is the AFI ID. To check the status of an AFI using its AFI ID, run the following command (the "state" line should read "available" when the AFI has been fully generated): 
+
+        cat [generated filename]_afi_id.txt
+        aws ec2 describe-fpga-images --fpga-image-ids [AFI ID]
+
+7. Transfer the compiled executable (my executable was found in the corresponding example folder) and .awsxclbin file from the tools directory to the local machine, using scp or an [external client](https://docs.aws.amazon.com/transfer/latest/userguide/transfer-file.html).
+8. Start and access the F1 instance, then clone the github with the same command in step 1 (also seen below), then run the Vitis runtime setup script: 
 
         cd $AWS_FPGA_REPO_DIR [directory containing aws-fpga git repo]
         source vitis_runtime_setup.sh
 
-8. To execute an f1 program, simply `./` the file_name of the executable and the ".awsxclbin" file. I reccomend creating a new folder on the home directory or another place to contain each program run. 
+9. To execute an f1 program, simply `./` the file_name of the executable and the ".awsxclbin" file. I reccomend creating a new folder on the home directory or another place to contain each program run. 
 
         ./[executable_name] ./[FPGA_Binary_File].awsxclbin
 
@@ -100,7 +105,7 @@ The following are general instructions for compiling FPGA code into the requisit
 ## Useful Links and Sources
 - AWS-FPGA Github Repo: [https://github.com/aws/aws-fpga](https://github.com/aws/aws-fpga) (Documentation for FPGA Development on AWS)
 - AMD Xilinx Documentation: [https://docs.xilinx.com/home](https://docs.xilinx.com/home) (Xilinx-specific documentation, includes links for Vitis & Vivado)
-- AMD Xilinx Wiki: [https://xilinx-wiki.atlassian.net/wiki/spaces/A/overview](https://xilinx-wiki.atlassian.net/wiki/spaces/A/overview]) (General Xilinx FPGA and other embedded platform information)
+- AMD Xilinx Wiki: [https://xilinx-wiki.atlassian.net/wiki/spaces/A/overview](https://xilinx-wiki.atlassian.net/wiki/spaces/A/overview) (General Xilinx FPGA and other embedded platform information)
 - AMD Xilinx University Program Vitis Tutorial: [https://xilinx.github.io/xup_compute_acceleration/index.html](https://xilinx.github.io/xup_compute_acceleration/index.html) (Tutorials on using Xilinx's Vitis tools and other general information)
 - AMD Xilinx Vitis Examples Page [https://xilinx.github.io/Vitis_Accel_Examples/2022.1/html/index.html#0](https://xilinx.github.io/Vitis_Accel_Examples/2022.1/html/index.html#) (List of Xilinx examples in the AWS-FPGA Repo and explanations for each example)
 - HPC Challenge FPGA Applications Github: [https://github.com/pc2/HPCC_FPGA](https://github.com/pc2/HPCC_FPGA) (FPGA Benchmark suite using HPC challenge programs)

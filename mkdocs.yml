@@ -5,6 +5,7 @@ nav:
     - Home: index.md
     - Getting Started: techInfo.md
     - Developing Custom Applications: customApps.md
+    - Modifying Apps for F1: modApps.md
     - Testing Log: testLog.md 
 
 theme: readthedocs

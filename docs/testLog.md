@@ -6,6 +6,7 @@
 2. [**Loop Reorder AWS Example**](#loop-reorder-(aws-vitis-example))
 3. [**HPCC_FPGA Linpack Failed Benchmark**](#hpcc_fpga-linpack-failed-benchmark)
 4. [**HPCC_FPGA Failure Log**](#hpcc_fpga-failure-log)
+5. [**HPCG_FPGA Testing Log**](#hpcg_fpga-testing-log)
 
 This testing log is included for the purposes of documenting what errors or other interesting situations occured while working on this project. As such, this specific file will be mostly long, I would suggest using ctrl+f to find a specific situation if needed rather than reading through the entire thing. Note that many of the files or scripts I refer to in this document are images, primarily for the purpose of pointing things out. Most files will be found on this project's github. 
 
@@ -142,8 +143,70 @@ The image below is the current iteration of the .link settings for the same plat
 
 The changes made to this file are as described in the paragraph above the custom configuration file, these being changes to the sp-tag argument names from the generic name to the specific name seen in the kernel's source code.
 
-After having corrected each of the configs and settings, I was able to run through most of the build process, but encountered an error `WARNING: [VPL 60-732] Link waning: No monitor points found for BD automation.` and `ERROR: [VPL 60-1328] Vpl run 'vpl' failed`. The full details can be found in the image below (ignore the line of ^[[B chars, they were inserted as a result of screen). 
+After having corrected each of the configs and settings, I was able to run through most of the build process, but encountered an error `WARNING: [VPL 60-732] Link waning: No monitor points found for BD automation.` and `ERROR: [VPL 60-1328] Vpl run 'vpl' failed`. The full details can be found in the image below.  
 
 ![synth,link error.png](img/synth,link error.png)  
 
 The 'vpl' failed error is very generic and does not really include many details as to what exactly went wrong. I tried looking for logs but as can be seen in the warning line after the vpl error line, something went wrong with some of the log files and it has been difficult to pinpoint what exactly went wrong with the build. I am currently looking into the error, but after looking in one of the vivado logs, it appears that there is some sort of issue with the link settings that is causing other things to break. 
+
+## HPCG_FPGA Testing Log
+
+As an alternative to using the HPCC_FPGA suite of benchmarking tools, we tried using the HPCG ([High Performance Conguate Gradient Benchmark](https://github.com/Xilinx/HPCG_FPGA)). The main reasons why we felt we would have better luck with this benchmark over HPCC is because the HPCG-FPGA benchmark suite was actually created by Xilinx, whereas the HPCC benchmarks were not created exclusively for Xilinx FPGAs. Looking at the readme, the build process should actually be pretty simple, however we had to make various changes in order to get this benchmark to run correctly on AWS. 
+
+Before getting started, MPI must be installed onto the VM, I ran `sudo yum install mpich-3.2-autoload mpich-3.0-devel`, then log out and log into the instance. 
+
+The following commands will allow you to build the FPGA binaries (.xclbin) and the Host Application, although some configuration changes must be made to various configuration files that I will mention later on. 
+
+Following the readme's instructions, assuming that the vitis setup script has already been run and the github repo has already been cloned, I ran the following commands in the HPCG-FPGA home directory: 
+ 
+    make all TARGET=hw DEVICE=/opt/xilinx/platforms/xilinx_aws-vu9p-f1_shell-v04261818_201920_3/xilinx_aws-vu9p-f1_shell-v04261818_201920_3.xpfm
+
+This will build the FPGA binaries, note that we used the DEVICE parameter rather than the PLATFORM parameter as instructed in the github's readme. This change must be made or the binaries will be built for an Alveo U280 rather than our AWS F1 platform. This is based on line 17 in the [home directory's Makefile](https://github.com/Xilinx/HPCG_FPGA/blob/main/Makefile), and the fact that the keyword PLATFORM is not in this Makefile.
+
+To build the host application, the following commands must be run: 
+    
+    mkdir bin [DO NOT CD TO bin YET]
+    make arch=FPGA_DOUBLE
+
+You can change the precision of the host application by changing the "DOUBLE" to "SINGLE" as described in the readme. As previously mentioned, some configuration changes must be made before building the host application. Specifically, we need to change lines 68 - 71, the paths to the binary files. This is specifically referring to the path to the .xclbin (or in our case .awsxclbin) files when we actually try to execute the benchmark on the FPGA. If we are running on an F1 instance, you must first setup where you will place the .awsxclbin files on the F1 instance beforehand and enter it in the following lines. In my case, I created a "hpcg" folder on the home directory of my F1 instance at `/home/centos/hpcg`. I also made sure that the output name when generating the afi was the same as the kernel .cpp files before being built. For example, line 68 in my custom common.cpp file was `#define PATH_TO_BINARY_SPMV "/home/centos/hpcg/smpv.awsxclbin"`. Make sure to do this for the other 3 lines and their respective binary file. After we change the path, to each of the binary files the host application should be working. 
+
+The following image is the common.hpp file, notice that we changed the #define PATH_TO_BINARY_X lines: 
+![altered_common.png](img/altered_common.png) 
+
+For our AWS F1 platform, we also need to alter the Vitis/Vivado configuration files inside the [HPCC_FPGA/src-fpga/double](https://github.com/Xilinx/HPCG_FPGA/tree/main/src-fpga/double) directory. There are 4 configuration files we need to change which correspond to the 4 kernels, `dp.ini`, `spmv.ini`, `symgs.ini`, and `waxpby.ini`. The actual configuration files will be posted on our github repo [pending]. That being said, in order to know what changes to make, one must know the basics of the AWS F1 platform's floorplan and memory architecture. The F1 platform does not have HBM memory which this benchmark makes use of. We only have four DDR banks on our platform. We know this by running `platforminfo xilinx_aws-vu9p-f1_shell-v04261818_201920_3`. That means that we cannot use multiple kernels for this benchmark, as we do not have access to 32 HMB modules like the Alveo U280. 
+
+In each of the configuration files, I left the original code commented out, the comments are denoted with a `#`. 
+
+The image below describes dp.ini:
+![dp_config.png](img/dp_config.png) 
+
+
+The image below describes spmv.ini: 
+![spmv_config.png](img/spmv_config.png)
+
+
+The image below describes symgs.ini: 
+![symgs_config.png](img/symgs_config.png)
+
+
+The image below describes waxpby.ini:
+![waxpby_config.png](img/waxpby_config.png)
+
+
+After changing the configuration files as well as the common.hpp file to change the path to the binaries on my F1 instance, I recevied the following error: 
+
+![HPCG_newExe_Failed.png](img/HPCG_newExe_Failed.png)
+
+Error code -6 corresponds to the OpenCL host running out of resources, this combined with the error message regarding missing a second kernel, shows that either our configuration is incorrect, or we need to change src/ComputeSPMV_FPGA.cpp to only use 1 kernel or however many kernels correspond to our spmv.ini config file) rather than the 8 as defined in line 60 of the [ComputeSPMV_FPGA.cpp](https://github.com/Xilinx/HPCG_FPGA/blob/main/src/ComputeSPMV_FPGA.cpp) file. We will have to make this change to each of the four kernels. 
+
+As previously mentioned, I had to make some changes to the link settings in order to get everything workng correctly. That being said, I also had to make additional changes to the kernel host files that were related to HBM memory. Specifically, the array "bank[]", then we need to change the parameters for the buffers that have already been created. The buffers are called something along the lines of "intBufExt1" and "intBufExt2", we need to change the .flag parameter to one of the bank_item objects in the bank[] array. 
+
+After making multple changes to the kernels and link files, I made sure to run both software and hardware emulation in order to get the kernels up and running. I also tried building the kernels overnight a couple of times but made the mistake of leaving my screen active and attached while my local machine went to sleep. The software emulation made me aware of some of basic syntax errors which I corrected, and the hardware emulation gave me some conflicting insights on the link settings. Some of the automatically generated Vivado reports can be found in the build folder in the /src-fpga directory. You can also run the vitis_analyzer command and point it at the build directory which can give more insights on the link settings. 
+
+In order to get vitis_analyzer working correctly, you must have access to either your AWS instance's GUI, or you must setup xquartz or another X Window manager through SSH. To get the vitis_analyzer to work on my instance with my setup (MacOS connected using xquartz: I installed xquartz using homebrew but still had issues getting the vitis_analyzer to work properly. In order to get everything working, I had to install xquartz locally, create an ssh config with a line that allows X11trusted [(I followed along using this SOF post).](https://stackoverflow.com/questions/39622173/cant-run-ssh-x-on-macos-sierra) I also had to run `sudo yum install xauth java` to make sure that the instance could recognize my xquartz connection and actually display the GUI. To connect to the instance and make use of xquartz, I have to connect to my instance using the command `ssh -X centos@[ip_to_instance]`, alternatively, the command  `ssh -Y centos@[ip_to_instance]`, the `-Y` switch means a trusted SSH connection and might work if `-X` does not work. 
+
+After making some changes based on the vitis_analyzer, I re-built the kernels and host application and tried running again, but received a different error this time. The error was `[XRT] ERROR: std::bad alloc ... src/ComputeSMPV_FPGA.cpp:220 Error calling buffer_input[i] = cl::Buffer(context, CL_MEM_READ_ONLY | CL_MEM_EXT_PTR_XILINX | CL_MEM_USE_HOST_PTR, sizeof(synt_type) * dataSize, &inBufExt1[i], &err), error code is: -5`. At first, we believed that our FPGA was running out of memory, as error code -5 corresponds to the OpenCL runtime running out of resources, however, after referring to the [AWS F1 shell specifications](https://github.com/aws/aws-fpga/blob/master/FAQs.md), I figured out that our FPGA is not running out of memory, rather the memory allocation that I altered is not correct. Line 220 (referenced and printed out in the error above) basically means that the runtime could not allocate the memory for the buffer containing inBufExt1[i], this is the very first buffer that was allocated, so its very likely that this is a memory allocation problem rather than a memory capacity problem, as if this were a capacity issue, it is very likely that the runtime would have gotten to at least the second buffer then run out of memory. 
+
+In order to best come up with a solution and a way to fix the file, I decided to rewrite my own version of the vector addition examples by instead trying vector subtraction. This was especially insightful as my understanding of not only the basics of OpenCL increased, but also of how the SPMV source code worked. I broke down the vadd example into parts that I understood, then compared them to the SPMV_FPGA. My custom vsub kernel can be seen in our Github repo [Link pending](), more details may also be found [here](/CustomApps) in our documentation.
+
+After having made adjustments to each of the compute kernel host files, I was able to get the benchmark to run. A more detailed write up on the exact changes I had to make can be found in the [Modifying Apps for F1](/modApps) page. That being said, the HPCG benchmark is not 100% up and runnning just yet. I was able to implement a 1 and 2 kernel version that runs properly, however I have been having issues getting the benchmark to run with 3 kernels.   
